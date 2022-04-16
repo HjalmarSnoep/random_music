@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+  <head>
+    <script>
+      var MG={};
+      MG.trons={};
+    </script>
+    <script src="beep-o-tron-standalone.js"></script>
+  </head>
+<body>
+<button id="start">start</button>
+<script>
+var start=document.getElementById("start");
+start.addEventListener("click",init);
+var next_note=20,counter=0;
+var arpeggio=20,arpeggio_counter=0;
+var melody=25;
+var speed=40;
+var scale=[0,2,4,5,7]; // normal major scale
+var shift=12; // normal major scale of C
+
+function init()
+{
+  MG.trons.beepotron.init();
+  play();
+}
+function play()
+{
+  counter++;
+  next_note--;
+  if(next_note<0)
+  {
+    playMelody();
+  }
+  arpeggio_counter++;
+  if(arpeggio_counter%120==20)
+  {
+    playChord();
+  }
+
+  window.requestAnimationFrame(play);
+}
+function playMelody()
+{
+  
+    if(Math.cos(counter/23)<0.7)  melody++;
+    if(Math.sin(2+counter/25)<0.7)  melody--;
+    if(Math.cos(3+counter/27)<0.5)  melody++;
+    if(Math.sin(next_note/311)<0) melody++;
+    if(Math.cos(0.5+counter/313)<0)   melody--;
+    if(Math.sin(1+counter/317)<0.5) melody--;
+    
+    if(melody>24) melody=24;
+    if(melody<0) melody=0;
+    
+    key=melody%32+shift;
+    
+    if(1)
+    {
+      if(counter%4==0) shift+=7;
+      if(counter%7==2) shift-=7;
+      if(counter%13==6) shift-=5;
+      if(shift<0) shift=0;
+      if(shift>12) shift=12;
+    }
+    // only play a not when it conforms.
+    var conforms=false;
+    for(var i=0;i<scale.length;i++)
+    {
+      var conforming=(24+key-shift)%12;
+      if(conforming==scale[i])
+      {
+          console.log("conforms to: "+scale[i]);
+          conforms=true;
+      }
+    }
+    if(conforms)
+    {
+        console.log(key);
+        // clamp to closest in scale.
+        
+        // determine the length
+        next_note=speed;
+        if(counter%7==3) speed*=2;
+        if(counter%13==7) speed/=2;
+        if(speed>20) speed=20;
+        if(speed>120) speed=120;
+  
+       // calculate the pitch
+        var pitch=Math.pow(1+1/12,key)*55;
+    
+        var recipe={};
+        recipe.o=[];// oscillators 8 oscillators means a gong like sound
+        for(var i=0;i<1;i++)
+        {
+        var osc={};
+          osc.t=2;
+          osc.f=pitch+Math.random()*pitch*0.01;
+          osc.v=0.1+0.5*Math.random();
+          osc.c=-1;
+          recipe.o.push(osc);
+        }
+        recipe.l=4*next_note/60;
+        recipe.e=[{t:0,v:1},{t:1.0,v:0}];
+        recipe.k="beep";
+        recipe.v=1;
+        MG.trons.beepotron.play(recipe,1);
+    }
+}
+function playChord()
+{
+  
+    // always play an arpeggio, which ALWAYS conforms.
+    arpeggio=shift+scale[Math.floor(12*counter/60)%scale.length];
+    // calculate the pitch
+    var pitch=Math.pow(1+1/12,arpeggio)*55;
+    var recipe={};
+    recipe.o=[];// oscillators 8 oscillators means a gong like sound
+    var osc={};
+    osc.t=2;
+    osc.f=pitch+Math.random();
+    osc.v=0.1+0.5*Math.random();
+    osc.c=-1;
+    recipe.o.push(osc);
+    recipe.l=1;
+    recipe.e=[{t:0,v:1},{t:1.0,v:0}];
+    recipe.k="beep";
+    recipe.v=1;
+    MG.trons.beepotron.play(recipe,1);
+
+}
+</script>
+</body>
+</html>
